@@ -47,7 +47,9 @@ const HomeScreen = () => {
         <View style={styles.activityContainer}>
           <Pressable 
           style={styles.activityCard}
-          onPress={() => alert("Workout Schedule")}>
+          onPress={() => {
+                      router.push('/workoutSchedule')
+                    }}>
             <Icon
               name="calendar-alt"
               size={30}
@@ -96,7 +98,11 @@ const HomeScreen = () => {
             <Icon name="times" size={30} color="#FFA500" />
           </Pressable>
 
-          <Pressable style={styles.sidebarItem}>
+          <Pressable style={styles.sidebarItem}
+          onPress={()=>{
+                      setSidebarVisible(false)
+                      router.push('/profile')
+                    }}>
             <Icon name="user" size={25} color="#FFA500" style={styles.icon} />
             <Text style={styles.sidebarText}>Profile</Text>
           </Pressable>
@@ -111,7 +117,11 @@ const HomeScreen = () => {
             <Text style={styles.sidebarText}>Progress Tracker</Text>
           </Pressable>
 
-          <Pressable style={styles.sidebarItem}>
+          <Pressable style={styles.sidebarItem}
+          onPress={()=>{
+            setSidebarVisible(false)
+            router.push('/history')
+          }}>
             <Icon
               name="history"
               size={25}

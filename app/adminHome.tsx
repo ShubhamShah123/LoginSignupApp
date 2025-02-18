@@ -48,7 +48,9 @@ const HomeScreen = () => {
         <View style={styles.activityContainer}>
           <Pressable 
           style={styles.activityCard}
-          onPress={() => alert("Workout Schedule")}>
+          onPress={() => {
+            router.push('/workoutSchedule')
+          }}>
             <Icon
               name="calendar-alt"
               size={30}
