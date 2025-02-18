@@ -3,10 +3,31 @@ import { View, Text, TouchableOpacity, ImageBackground, StyleSheet, StatusBar, B
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { router } from "expo-router"; // Import router for navigation
 import { enableScreens } from "react-native-screens";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 enableScreens();
 const Index = () => {
   useEffect(() => {
+
+    const checkLoginStatus = async () => {
+      const storedKey = await AsyncStorage.getItem('key');
+      const role = await AsyncStorage.getItem('role')
+      console.log(storedKey, role)
+      if (storedKey) {
+        // If key is present, navigate to Home page
+        if(role == 'client'){
+          router.push('/home')
+        }
+        else{
+          if(role == 'admin'){
+            router.push('/adminHome')
+          }
+        }
+        
+      }
+    };
+
+    checkLoginStatus();
     const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
       // Exit the app when the back button is pressed
       BackHandler.exitApp();
@@ -28,6 +49,14 @@ const Index = () => {
         <Text style={styles.title}>MyFitness</Text>
 
         <View style={styles.buttonContainer}>
+        <TouchableOpacity 
+            style={styles.button} 
+            onPress={() => {
+              console.log("Home Button Clicked");
+              router.push('/home');  // Use router to navigate to login screen
+            }}>
+            <Text style={styles.buttonText}>Home</Text>
+          </TouchableOpacity>
           <TouchableOpacity 
             style={styles.button} 
             onPress={() => {
@@ -40,7 +69,7 @@ const Index = () => {
             style={styles.button} 
             onPress={() => {
               console.log("Signup Button Clicked")
-              router.push('/signup');
+              router.push('/signup_part1');
             }}> 
             <Text style={styles.buttonText}>SIGNUP</Text>
           </TouchableOpacity>

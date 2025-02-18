@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { 
   View, 
   Text, 
@@ -6,91 +6,48 @@ import {
   TouchableOpacity, 
   ImageBackground, 
   StyleSheet, 
-  StatusBar,
-  Alert
+  StatusBar, 
+  BackHandler 
 } from "react-native";
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
-import { useLocalSearchParams, router } from "expo-router";
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { router } from "expo-router";
 
-
-interface SignupParams {
+interface SignupData {
   firstName: string;
   lastName: string;
   phoneNumber: string;
 }
 
-interface UserData extends SignupParams {
-  email: string;
-  password: string;
-  role: string;
-}
+const SignupPart1 = () => {
+  const [firstName, setFirstName] = useState<string>('');
+  const [lastName, setLastName] = useState<string>('');
+  const [phoneNumber, setPhoneNumber] = useState<string>('');
 
-const Signup = () => {
-  const params = useLocalSearchParams<SignupParams>();
-  
-  const [email, setEmail] = useState<string>('');
-  const [password, setPassword] = useState<string>('');
-  const [confirmPassword, setConfirmPassword] = useState<string>('');
+  useEffect(() => {
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      router.push('/');
+      return true;
+    });
 
-  const handleSignup = async () => {
-    if (!email || !password || !confirmPassword) {
-      Alert.alert('Error', 'Please fill all fields');
+    return () => backHandler.remove();
+  }, []);
+
+  const handleSignup = () => {
+    if (!firstName || !lastName || !phoneNumber) {
+      alert('Please fill all fields');
       return;
     }
 
-    if (password !== confirmPassword) {
-      Alert.alert('Error', 'Passwords do not match');
-      return;
-    }
-
-    // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(email)) {
-      Alert.alert('Error', 'Please enter a valid email address');
-      return;
-    }
-
-    // Password validation (minimum 8 characters, including numbers and special characters)
-    const passwordRegex = /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,}$/;
-    if (!passwordRegex.test(password)) {
-      Alert.alert(
-        'Error', 
-        'Password must be at least 8 characters long and contain at least one number'
-      );
-      return;
-    }
-
-    const userData: UserData = {
-      firstName: params.firstName,
-      lastName: params.lastName,
-      phoneNumber: params.phoneNumber,
-      role: 'client',
-      email: email,
-      password: password
+    const signupData: SignupData = {
+      firstName,
+      lastName,
+      phoneNumber,
     };
 
-    const ip = "192.168.224.36:8080";
-    const url = "http://" + ip + "/signup";
-    const response = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(userData),
+    router.push({
+      pathname: '/signup',
+      params: signupData
     });
-    const data = await response.json();
-    console.log("Response from server: " + JSON.stringify(data));
-
-    if (data.status_code === 200) {
-      // Successfully logged in, store the key
-      alert(data.msg)
-      await AsyncStorage.setItem('key', data.key);
-      router.push('/login')
-    } else {
-      // Handle login failure
-      alert('Login failed, please check your credentials.');
-    }
   };
 
   return (
@@ -104,58 +61,59 @@ const Signup = () => {
         <View style={styles.contentContainer}>
           <View style={styles.logoContainer}>
             <FontAwesome5 name="dumbbell" size={40} color="#FFA500" style={styles.iconStyle} />
-            <Text style={styles.title}>Complete Signup</Text>
+            <Text style={styles.title}>Signup</Text>
           </View>
 
           <View style={styles.formContainer}>
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={styles.label}>First Name</Text>
               <View style={styles.inputWrapper}>
-                <FontAwesome5 name="envelope" size={16} color="#FFA500" style={styles.inputIcon} />
+                <FontAwesome5 name="wpforms" size={16} color="#FFA500" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="my.fitness@gmail.com"
+                  placeholder="First Name"
                   placeholderTextColor="#666"
-                  keyboardType="email-address"
-                  autoCapitalize="none"
-                  value={email}
-                  onChangeText={setEmail}
+                  keyboardType="default"
+                  autoCapitalize="words"
+                  value={firstName}
+                  onChangeText={setFirstName}
                 />
               </View>
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={styles.label}>Last Name</Text>
               <View style={styles.inputWrapper}>
-                <FontAwesome5 name="lock" size={16} color="#FFA500" style={styles.inputIcon} />
+                <FontAwesome5 name="wpforms" size={16} color="#FFA500" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Enter your password"
+                  placeholder="Last Name"
                   placeholderTextColor="#666"
-                  secureTextEntry
-                  value={password}
-                  onChangeText={setPassword}
+                  autoCapitalize="words"
+                  value={lastName}
+                  onChangeText={setLastName}
                 />
               </View>
             </View>
 
             <View style={styles.inputContainer}>
-              <Text style={styles.label}>Confirm Password</Text>
+              <Text style={styles.label}>Contact Number</Text>
               <View style={styles.inputWrapper}>
-                <FontAwesome5 name="lock" size={16} color="#FFA500" style={styles.inputIcon} />
+                <FontAwesome5 name="phone" size={16} color="#FFA500" style={styles.inputIcon} />
                 <TextInput
                   style={styles.input}
-                  placeholder="Confirm your password"
+                  placeholder="Enter your phone number"
                   placeholderTextColor="#666"
-                  secureTextEntry
-                  value={confirmPassword}
-                  onChangeText={setConfirmPassword}
+                  value={phoneNumber}
+                  onChangeText={setPhoneNumber}
+                  keyboardType="number-pad"
+                  maxLength={10}
                 />
               </View>
             </View>
 
             <TouchableOpacity style={styles.signInButton} onPress={handleSignup}>
-              <Text style={styles.signInText}>Sign Up</Text>
+              <Text style={styles.signInText}>Next</Text>
               <FontAwesome5 name="arrow-right" size={16} color="#FFA500" />
             </TouchableOpacity>
           </View>
@@ -265,4 +223,4 @@ const styles = StyleSheet.create({
   },
 });
 
-export default Signup;
+export default SignupPart1;

@@ -3,113 +3,171 @@ import { View, Text, TextInput, TouchableOpacity, ImageBackground, StyleSheet, S
 import FontAwesome5 from '@expo/vector-icons/FontAwesome5';
 import { enableScreens } from "react-native-screens";
 import { router, useNavigation } from "expo-router";
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 enableScreens();
 
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-	const navigation = useNavigation();
-	
-	useEffect(() => {
-	const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
-		// Navigate directly to Index page instead of going back
-		navigation.navigate('index');
-		return true; // Prevent default behavior
-	});
+  const navigation = useNavigation();
 
-	// Cleanup the event listener on component unmount
-	return () => backHandler.remove();
-	}, [navigation]);
-  const handleLogin = () => {
+  // Check if the key is already stored
+  useEffect(() => {
+    const checkLoginStatus = async () => {
+      const storedKey = await AsyncStorage.getItem('key');
+      const role = await AsyncStorage.getItem('role')
+      console.log(storedKey, role)
+      if (storedKey) {
+        // If key is present, navigate to Home page
+        if(role == 'client'){
+          router.push('/home')
+        }
+        else{
+          if(role == 'admin'){
+            router.push('/adminHome')
+          }
+        }
+        
+      }
+    };
+
+    checkLoginStatus();
+
+    const backHandler = BackHandler.addEventListener('hardwareBackPress', () => {
+      // Navigate directly to Index page instead of going back
+      router.push('/login')
+      return true; // Prevent default behavior
+    });
+
+    // Cleanup the event listener on component unmount
+    return () => backHandler.remove();
+  }, [navigation]);
+
+  const handleLogin = async () => {
     console.log('Email:', email);
     console.log('Password:', password);
+    const ip = "192.168.224.36:8080";
+    const url = "http://" + ip + "/login";
+    const response = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        email: email,
+        password: password,
+      }),
+    });
+    const data = await response.json();
+    console.log("Response from server: " + JSON.stringify(data));
+
+    if (data.status_code === 200) {
+      // Successfully logged in, store the key
+      await AsyncStorage.setItem('key', data.key);
+      console.log(data.data[0], data.data[0]['email'])
+      await AsyncStorage.setItem('profile', JSON.stringify(data.data[0]))
+      
+      
+      if(data.flag == 1){
+        await AsyncStorage.setItem('role', 'admin');
+        router.push('/adminHome')
+      }
+      else{
+        await AsyncStorage.setItem('role', 'client');
+        router.push('/home')
+      }
+    } else {
+      // Handle login failure
+      alert('Login failed, please check your credentials.');
+    }
   };
 
   return (
     <View style={styles.container}>
-	 <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
-	 <ImageBackground
-	   source={require("../assets/images/home_background.jpg")}
-	   style={styles.background}
-	   resizeMode="cover"
-	 >
-	   <View style={styles.contentContainer}>
-		{/* Logo and Title Section */}
-		<View style={styles.logoContainer}>
-		  <FontAwesome5 name="dumbbell" size={40} color="#FFA500" style={styles.iconStyle} />
-		  <Text style={styles.title}>Login</Text>
-		</View>
+      <StatusBar translucent backgroundColor="transparent" barStyle="light-content" />
+      <ImageBackground
+        source={require("../assets/images/home_background.jpg")}
+        style={styles.background}
+        resizeMode="cover"
+      >
+        <View style={styles.contentContainer}>
+          {/* Logo and Title Section */}
+          <View style={styles.logoContainer}>
+            <FontAwesome5 name="dumbbell" size={40} color="#FFA500" style={styles.iconStyle} />
+            <Text style={styles.title}>Login</Text>
+          </View>
 
-		{/* Login Form */}
-		<View style={styles.formContainer}>
-		  <View style={styles.inputContainer}>
-		  <Text style={styles.label}>Email</Text>
-		    <View style={styles.inputWrapper}>
-			 <FontAwesome5 name="envelope" size={16} color="#FFA500" style={styles.inputIcon} />
-			 <TextInput
-			   style={styles.input}
-			   placeholder="my.fitness@gmail.com"
-			   placeholderTextColor="#666"
-			   keyboardType="email-address"
-			   autoCapitalize="none"
-			   value={email}
-			   onChangeText={setEmail}
-			 />
-		    </View>
-		  </View>
+          {/* Login Form */}
+          <View style={styles.formContainer}>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Email</Text>
+              <View style={styles.inputWrapper}>
+                <FontAwesome5 name="envelope" size={16} color="#FFA500" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="my.fitness@gmail.com"
+                  placeholderTextColor="#666"
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                  value={email}
+                  onChangeText={setEmail}
+                />
+              </View>
+            </View>
 
-		  <View style={styles.inputContainer}>
-		  <Text style={styles.label}>Password</Text>
-		    <View style={styles.inputWrapper}>
-			 <FontAwesome5 name="lock" size={16} color="#FFA500" style={styles.inputIcon} />
-			 <TextInput
-			   style={styles.input}
-			   placeholder="Enter your password"
-			   placeholderTextColor="#666"
-			   secureTextEntry
-			   value={password}
-			   onChangeText={setPassword}
-			 />
-		    </View>
-		  </View>
+            <View style={styles.inputContainer}>
+              <Text style={styles.label}>Password</Text>
+              <View style={styles.inputWrapper}>
+                <FontAwesome5 name="lock" size={16} color="#FFA500" style={styles.inputIcon} />
+                <TextInput
+                  style={styles.input}
+                  placeholder="Enter your password"
+                  placeholderTextColor="#666"
+                  secureTextEntry
+                  value={password}
+                  onChangeText={setPassword}
+                />
+              </View>
+            </View>
 
-		  {/* Login Button */}
-		  <TouchableOpacity style={styles.signInButton} onPress={handleLogin}>
-		    <Text style={styles.signInText}>Sign In</Text>
-		    <FontAwesome5 name="arrow-right" size={16} color="#FFA500" />
-		  </TouchableOpacity>
+            {/* Login Button */}
+            <TouchableOpacity style={styles.signInButton} onPress={handleLogin}>
+              <Text style={styles.signInText}>Sign In</Text>
+              <FontAwesome5 name="arrow-right" size={16} color="#FFA500" />
+            </TouchableOpacity>
 
-		  <TouchableOpacity>
-		    <Text style={styles.forgotPassword}>Forgot Password?</Text>
-		  </TouchableOpacity>
-		</View>
+            <TouchableOpacity>
+              <Text style={styles.forgotPassword}>Forgot Password?</Text>
+            </TouchableOpacity>
+          </View>
 
-		{/* Social Media Links */}
-		<View style={styles.socialContainer}>
-		  <TouchableOpacity style={styles.socialButton}>
-		    <FontAwesome5 name="google" size={20} color="#FFA500" />
-		  </TouchableOpacity>
-		  <TouchableOpacity style={styles.socialButton}>
-		    <FontAwesome5 name="facebook-f" size={20} color="#FFA500" />
-		  </TouchableOpacity>
-		  <TouchableOpacity style={styles.socialButton}>
-		    <FontAwesome5 name="twitter" size={20} color="#FFA500" />
-		  </TouchableOpacity>
-		</View>
+          {/* Social Media Links */}
+          <View style={styles.socialContainer}>
+            <TouchableOpacity style={styles.socialButton}>
+              <FontAwesome5 name="google" size={20} color="#FFA500" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.socialButton}>
+              <FontAwesome5 name="facebook-f" size={20} color="#FFA500" />
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.socialButton}>
+              <FontAwesome5 name="twitter" size={20} color="#FFA500" />
+            </TouchableOpacity>
+          </View>
 
-		{/* Sign Up Link */}
-		<View style={styles.signupContainer}>
-		  <Text style={styles.signupText}>Don't have account? </Text>
-		  <TouchableOpacity
-		   onPress={() => {
-			router.push('/signup');
-		   }}> 
-		    <Text style={styles.signupLink}>Sign up now</Text>
-		  </TouchableOpacity>
-		</View>
-	   </View>
-	 </ImageBackground>
+          {/* Sign Up Link */}
+          <View style={styles.signupContainer}>
+            <Text style={styles.signupText}>Don't have an account? </Text>
+            <TouchableOpacity
+              onPress={() => {
+                router.push('/signup_part1');
+              }}
+            >
+              <Text style={styles.signupLink}>Sign up now</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </ImageBackground>
     </View>
   );
 };
